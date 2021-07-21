@@ -13,6 +13,9 @@ library(tidyverse)
 library(caret)
 library(dslabs)
 
+#### Predict Male ###
+
+#Heights set(dslabs)
 data(heights)
 
 # define the outcome and predictors

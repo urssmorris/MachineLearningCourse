@@ -157,11 +157,16 @@ confusionMatrix(data = y_hat, reference = test_set$sex)
 
 ### ROC and precision-recall curves
 
+#guessing male with higher probability would give us higher accuracy due to the bias in the sample
+#predicts male guessing 90% of the time, this would come at a cost of lower sensitivity
 p <- 0.9
 y_hat <- sample(c("Male", "Female"), length(test_index), replace = TRUE, prob=c(p, 1-p)) %>% 
      factor(levels = levels(test_set$sex))
 mean(y_hat == test_set$sex)
 
+#ROC curve for guessing sex, but using different probabilities of guessing male
+#ROC curve for guessing always looks like this, like the identity line
+#a perfect algorithm would shoot straight to one and stay up there, perfect sensitivity for all values of specificity
 probs <- seq(0, 1, length.out = 10)
 guessing <- map_df(probs, function(p){
      y_hat <- 
@@ -173,6 +178,8 @@ guessing <- map_df(probs, function(p){
 })
 guessing %>% qplot(FPR, TPR, data =., xlab = "1 - Specificity", ylab = "Sensitivity")
 
+
+#construct an ROC curve for the height-based approach
 cutoffs <- c(50, seq(60, 75), 80)
 height_cutoff <- map_df(cutoffs, function(x){
      y_hat <- ifelse(test_set$height > x, "Male", "Female") %>% 
@@ -181,12 +188,15 @@ height_cutoff <- map_df(cutoffs, function(x){
           FPR = 1-specificity(y_hat, test_set$sex),
           TPR = sensitivity(y_hat, test_set$sex))
 })
+
+# plotting both curves together, we are able to compare sensitivity for different values of specificity
 bind_rows(guessing, height_cutoff) %>%
      ggplot(aes(FPR, TPR, color = method)) +
      geom_line() +
      geom_point() +
      xlab("1 - Specificity") +
      ylab("Sensitivity")
+
 
 map_df(cutoffs, function(x){
      y_hat <- ifelse(test_set$height > x, "Male", "Female") %>% 

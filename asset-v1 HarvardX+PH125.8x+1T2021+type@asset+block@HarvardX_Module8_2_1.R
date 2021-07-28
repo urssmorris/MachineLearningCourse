@@ -190,6 +190,7 @@ height_cutoff <- map_df(cutoffs, function(x){
 })
 
 # plotting both curves together, we are able to compare sensitivity for different values of specificity
+# we obtain higher sensitivity with the height-based approach for all values of specificity, which imply it is a better method
 bind_rows(guessing, height_cutoff) %>%
      ggplot(aes(FPR, TPR, color = method)) +
      geom_line() +
@@ -197,7 +198,7 @@ bind_rows(guessing, height_cutoff) %>%
      xlab("1 - Specificity") +
      ylab("Sensitivity")
 
-
+#when making ROC curves, it is often nice to add the cutoff used to the points.
 map_df(cutoffs, function(x){
      y_hat <- ifelse(test_set$height > x, "Male", "Female") %>% 
           factor(levels = c("Female", "Male"))
@@ -210,6 +211,7 @@ map_df(cutoffs, function(x){
      geom_line() +
      geom_point() +
      geom_text(nudge_y = 0.01)
+
 
 guessing <- map_df(probs, function(p){
      y_hat <- sample(c("Male", "Female"), length(test_index), 

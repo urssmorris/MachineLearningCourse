@@ -8,6 +8,11 @@
 
 ###############################################################################
 
+install.packages('e1071', dependencies=TRUE)
+
+
+
+
 ### Caret package, training and test sets, and overall accuracy
 library(tidyverse)
 library(caret)
@@ -35,10 +40,12 @@ train_set <- heights[-test_index, ]
 #sample function to compare algorithms
 y_hat <- sample(c("Male", "Female"),length(test_index), replace = TRUE)
 
-#factor(operador pipeline %>% es útil para concatenar múltiples dplyr operaciones)
+
+#factor(operador pipeline %>% es util para concatenar multiples dplyr operaciones)
 #caret package, require or recommend that categorical outcomes be coded as factors.
 y_hat <- sample(c("Male", "Female"), length(test_index), replace = TRUE) %>% 
      factor(levels = levels(test_set$sex))
+
 
 #The overall accuracy is simply defined as the overall proportion that is predicted correctly
 mean(y_hat == test_set$sex)
@@ -78,7 +85,7 @@ best_cutoff <- cutoff[which.max(accuracy)]
 best_cutoff
 
 
-
+ 
 #Test cut-off on our test set to make sure accuracy is not overly optimistic.
 y_hat <- ifelse(test_set$height > best_cutoff, "Male", "Female") %>% 
      factor(levels = levels(test_set$sex))
@@ -89,26 +96,37 @@ mean(y_hat == test_set$sex)
 
 ### Confusion Matrix
 
+#tabulate each combination of prediction and actual value
 table(predicted = y_hat, actual = test_set$sex)
 
+#compute the accuracy separately for each sex
 test_set %>% 
      mutate(y_hat = y_hat) %>%
      group_by(sex) %>% 
      summarize(accuracy = mean(y_hat == sex))
 
+# Male percentage(prevalence)
 prev <- mean(y == "Male")
 prev
 
+#Confusion matrix representation
 mat <- matrix(c("True positives (TP)", "False negatives (FN)", 
                 "False positives (FP)", "True negatives (TN)"), 2, 2)
 colnames(mat) <- c("Actually Positive", "Actually Negative")
 rownames(mat) <- c("Predicted positve", "Predicted negative")
 as.data.frame(mat) %>% knitr::kable()
 
+#Confusion matrix function
 confusionMatrix(data = y_hat, reference = test_set$sex)
+
+
+
+####################################################################################
 
 ### Balanced accuracy and F1 score
 
+# maximize F-score instead of overall accuracy.
+#F_meas function in the caret package computes the summary with beta defaulting to one.
 cutoff <- seq(61, 70)
 F_1 <- map_dbl(cutoff, function(x){
      y_hat <- ifelse(train_set$height > x, "Male", "Female") %>% 
@@ -116,6 +134,7 @@ F_1 <- map_dbl(cutoff, function(x){
      F_meas(data = y_hat, reference = factor(train_set$sex))
 })
 
+#plot the F1 measure versus the different cutoffs.
 data.frame(cutoff, F_1) %>% 
      ggplot(aes(cutoff, F_1)) + 
      geom_point() + 
@@ -123,12 +142,16 @@ data.frame(cutoff, F_1) %>%
 
 max(F_1)
 
+#maximized when we use a cutoff of 66 inches.
 best_cutoff <- cutoff[which.max(F_1)]
 best_cutoff
 
+#cutoff balances the specificity and sensitivity of our confusion matrix
 y_hat <- ifelse(test_set$height > best_cutoff, "Male", "Female") %>% 
      factor(levels = levels(test_set$sex))
 confusionMatrix(data = y_hat, reference = test_set$sex)
+
+#######################################################################################
 
 ### Prevalence matters in practice
 

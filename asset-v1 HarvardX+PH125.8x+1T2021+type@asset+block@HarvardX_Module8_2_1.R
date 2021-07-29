@@ -212,7 +212,8 @@ map_df(cutoffs, function(x){
      geom_point() +
      geom_text(nudge_y = 0.01)
 
-
+#when prevalence matters, we make a precision recall plot, plotting precision against recall.
+#Guess
 guessing <- map_df(probs, function(p){
      y_hat <- sample(c("Male", "Female"), length(test_index), 
                      replace = TRUE, prob=c(p, 1-p)) %>% 
@@ -221,6 +222,7 @@ guessing <- map_df(probs, function(p){
           recall = sensitivity(y_hat, test_set$sex),
           precision = precision(y_hat, test_set$sex))
 })
+#Cutoff
 height_cutoff <- map_df(cutoffs, function(x){
      y_hat <- ifelse(test_set$height > x, "Male", "Female") %>% 
           factor(levels = c("Female", "Male"))
@@ -228,11 +230,16 @@ height_cutoff <- map_df(cutoffs, function(x){
           recall = sensitivity(y_hat, test_set$sex),
           precision = precision(y_hat, test_set$sex))
 })
+#Plot
+#precision of guessing is not high.This is because the prevalence is low
 bind_rows(guessing, height_cutoff) %>%
      ggplot(aes(recall, precision, color = method)) +
      geom_line() +
      geom_point()
 
+
+#change positives to mean male instead of females
+#Guess
 guessing <- map_df(probs, function(p){
      y_hat <- sample(c("Male", "Female"), length(test_index), replace = TRUE, 
                      prob=c(p, 1-p)) %>% 
@@ -241,6 +248,7 @@ guessing <- map_df(probs, function(p){
           recall = sensitivity(y_hat, relevel(test_set$sex, "Male", "Female")),
           precision = precision(y_hat, relevel(test_set$sex, "Male", "Female")))
 })
+#Cutoff
 height_cutoff <- map_df(cutoffs, function(x){
      y_hat <- ifelse(test_set$height > x, "Male", "Female") %>% 
           factor(levels = c("Male", "Female"))
@@ -248,6 +256,8 @@ height_cutoff <- map_df(cutoffs, function(x){
           recall = sensitivity(y_hat, relevel(test_set$sex, "Male", "Female")),
           precision = precision(y_hat, relevel(test_set$sex, "Male", "Female")))
 })
+#Plot
+#ROC curve remains the same, but the precision recall plot changes
 bind_rows(guessing, height_cutoff) %>%
      ggplot(aes(recall, precision, color = method)) +
      geom_line() +
